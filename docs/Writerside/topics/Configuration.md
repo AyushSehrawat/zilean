@@ -59,6 +59,14 @@ _Default: `200`_
 _The minimum score match for DMM search results. Closer to 1 means a more exact match has to occur. A value between 1 and 0._
 _Default: `0.85`_
 
+> **GitHub Rate Limiting**
+> DMM Hashlists are synced from GitHub using git clone/pull operations. To avoid rate limiting, set the `GITHUB_TOKEN` environment variable to a valid GitHub Personal Access Token.
+> This token only requires public repository read access. When set, authenticated git operations will be used, which have significantly higher rate limits.
+> ```bash
+> GITHUB_TOKEN=ghp_your_token_here
+> ```
+{ style="note" }
+
 ### Torznab Configuration
 **Torznab.EnableEndpoint**
 _Indicates whether the Torznab indexer should expose an API endpoint._

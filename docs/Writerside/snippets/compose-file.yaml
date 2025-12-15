@@ -11,6 +11,8 @@ services:
     tty: true
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # Optional: Set GITHUB_TOKEN to avoid rate limiting when scraping DMM hashlists
+      # GITHUB_TOKEN: ${GITHUB_TOKEN}
     ports:
       - "8181:8181"
     volumes:
