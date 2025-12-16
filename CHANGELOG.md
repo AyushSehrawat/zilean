@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.0](https://github.com/AyushSehrawat/zilean/compare/v4.0.0...v4.1.0) (2025-12-16)
+
+
+### 🚀 New Features
+
+* **dmm:** implement retry logic for git clone and pull operations ([5fc6f80](https://github.com/AyushSehrawat/zilean/commit/5fc6f8098d531398c98fd27917496956319a818a))
+
+
+### ⚙️ Chores
+
+* Update CHANGELOG for version 4.0.0 ([086aa3c](https://github.com/AyushSehrawat/zilean/commit/086aa3c57a80d4b54434cf49faae837502fa5f3a))
+
 ## [4.0.0](https://github.com/AyushSehrawat/zilean/compare/v3.5.0...v4.0.0) (2025-12-15)
 
 
