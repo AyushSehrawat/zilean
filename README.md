@@ -8,6 +8,12 @@ Newly added is the ability for Zilean to scrape from your running Zurg instance,
 
 Documentation for zilean can be viewed at [https://ipromknight.github.io/zilean/](https://ipromknight.github.io/zilean/)
 
+This fork fixes/adds the following stuff:
+
+- Use `git clone` and `git pull` for incremental download instead of downloading whole repo again and again
+- Add `GITHUB_TOKEN` for authed requests
+- Add retry with sequential backoff for repo pull to handle errors
+
 ---
 
 
