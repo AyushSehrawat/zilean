@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.1](https://github.com/AyushSehrawat/zilean/compare/v4.0.0...v4.0.1) (2025-12-16)
+
+
+### ⚙️ Chores
+
+* Update CHANGELOG for version 4.0.0 ([086aa3c](https://github.com/AyushSehrawat/zilean/commit/086aa3c57a80d4b54434cf49faae837502fa5f3a))
+
 ## [4.0.0](https://github.com/AyushSehrawat/zilean/compare/v3.5.0...v4.0.0) (2025-12-15)
 
 
