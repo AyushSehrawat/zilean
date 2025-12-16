@@ -4,6 +4,8 @@ public class DmmFileDownloader(ILogger<DmmFileDownloader> logger, ZileanConfigur
 {
     private const string RepoUrl = "https://github.com/debridmediamanager/hashlists.git";
     private const string RepoBranch = "main";
+    private const int MaxRetryAttempts = 5;
+    private static readonly TimeSpan _initialRetryDelay = TimeSpan.FromSeconds(5);
 
     private static readonly IReadOnlyCollection<string> _filesToIgnore =
     [
@@ -69,20 +71,23 @@ public class DmmFileDownloader(ILogger<DmmFileDownloader> logger, ZileanConfigur
 
     private async Task GitCloneAsync(string repoUrl, string targetDirectory, CancellationToken cancellationToken)
     {
-        var process = new Process
+        await ExecuteWithRetryAsync(async () =>
         {
-            StartInfo = new ProcessStartInfo
+            var process = new Process
             {
-                FileName = "git",
-                Arguments = $"clone --depth 1 --branch {RepoBranch} --single-branch \"{repoUrl}\" \"{targetDirectory}\"",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-            }
-        };
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "git",
+                    Arguments = $"clone --depth 1 --branch {RepoBranch} --single-branch \"{repoUrl}\" \"{targetDirectory}\"",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                }
+            };
 
-        await RunGitProcessAsync(process, "clone", cancellationToken);
+            await RunGitProcessAsync(process, "clone", cancellationToken);
+        }, "clone", targetDirectory, cancellationToken);
     }
 
     private async Task GitPullAsync(string repoDirectory, string repoUrl, CancellationToken cancellationToken)
@@ -103,21 +108,24 @@ public class DmmFileDownloader(ILogger<DmmFileDownloader> logger, ZileanConfigur
 
         await RunGitProcessAsync(setUrlProcess, "remote set-url", cancellationToken);
 
-        // Pull latest changes
-        var pullProcess = new Process
+        // Pull latest changes with retry
+        await ExecuteWithRetryAsync(async () =>
         {
-            StartInfo = new ProcessStartInfo
+            var pullProcess = new Process
             {
-                FileName = "git",
-                Arguments = $"-C \"{repoDirectory}\" pull --ff-only",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-            }
-        };
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "git",
+                    Arguments = $"-C \"{repoDirectory}\" pull --ff-only",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                }
+            };
 
-        await RunGitProcessAsync(pullProcess, "pull", cancellationToken);
+            await RunGitProcessAsync(pullProcess, "pull", cancellationToken);
+        }, "pull", repoDirectory, cancellationToken);
     }
 
     private async Task RunGitProcessAsync(Process process, string operation, CancellationToken cancellationToken)
@@ -141,6 +149,48 @@ public class DmmFileDownloader(ILogger<DmmFileDownloader> logger, ZileanConfigur
         if (!string.IsNullOrWhiteSpace(output))
         {
             logger.LogDebug("Git {Operation} output: {Output}", operation, output);
+        }
+    }
+
+    private async Task ExecuteWithRetryAsync(Func<Task> operation, string operationName, string targetDirectory, CancellationToken cancellationToken)
+    {
+        var attempt = 0;
+        var delay = _initialRetryDelay;
+
+        while (true)
+        {
+            attempt++;
+            try
+            {
+                await operation();
+                return;
+            }
+            catch (InvalidOperationException ex) when (attempt < MaxRetryAttempts && !cancellationToken.IsCancellationRequested)
+            {
+                logger.LogWarning(
+                    "Git {Operation} attempt {Attempt}/{MaxAttempts} failed. Retrying in {Delay} seconds... Error: {Error}",
+                    operationName,
+                    attempt,
+                    MaxRetryAttempts,
+                    delay.TotalSeconds,
+                    ex.Message);
+
+                // Clean up the target directory before retry for clone operations
+                if (operationName == "clone" && Directory.Exists(targetDirectory))
+                {
+                    try
+                    {
+                        Directory.Delete(targetDirectory, true);
+                    }
+                    catch (Exception cleanupEx)
+                    {
+                        logger.LogWarning("Failed to clean up directory {Directory} before retry: {Error}", targetDirectory, cleanupEx.Message);
+                    }
+                }
+
+                await Task.Delay(delay, cancellationToken);
+                delay = TimeSpan.FromSeconds(Math.Min(delay.TotalSeconds * 2, 60)); // Exponential backoff, max 60 seconds
+            }
         }
     }
 
