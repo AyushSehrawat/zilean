@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.1.1](https://github.com/AyushSehrawat/zilean/compare/v4.1.0...v4.1.1) (2025-12-16)
+
+
+### ⚙️ Chores
+
+* README changes ([a30cdf2](https://github.com/AyushSehrawat/zilean/commit/a30cdf2b4a7a7a1c15bbd942a9e2bed5be9685be))
+
 ## [4.1.0](https://github.com/AyushSehrawat/zilean/compare/v4.0.0...v4.1.0) (2025-12-16)
 
 
