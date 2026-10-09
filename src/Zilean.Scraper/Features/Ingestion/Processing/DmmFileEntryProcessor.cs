@@ -81,7 +81,32 @@ public partial class DmmFileEntryProcessor(
 
         try
         {
-            var decodedJson = Decompressor.FromEncodedUriComponent(match.Groups[1].Value);
+            var encodedData = match.Groups[1].Value;
+
+            // New DMM hashlist format stores the compressed payload in
+            // lists/<UUID>.txt while the HTML iframe contains #id=<UUID>.
+            if (encodedData.StartsWith("id=", StringComparison.Ordinal))
+            {
+                var listId = encodedData[3..];
+                var dataDirectory = Path.GetDirectoryName(filePath)!;
+                var compressedFilePath = Path.Combine(
+                    dataDirectory,
+                    "repo",
+                    "lists",
+                    $"{listId}.txt");
+
+                if (!File.Exists(compressedFilePath))
+                {
+                    throw new FileNotFoundException(
+                        $"DMM compressed list file not found: {compressedFilePath}");
+                }
+
+                encodedData = await File.ReadAllTextAsync(
+                    compressedFilePath,
+                    cancellationToken);
+            }
+
+            var decodedJson = Decompressor.FromEncodedUriComponent(encodedData);
 
             var utf8Bytes = Encoding.UTF8.GetBytes(decodedJson);
             var span = new ReadOnlySpan<byte>(utf8Bytes);
